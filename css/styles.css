@@ -4452,3 +4452,189 @@ td:last-child {
         right: -2rem;
     }
 }
+
+/* -------------------------------------------------------------------
+ * ## Final Extracurriculars Section Fix
+ * ------------------------------------------------------------------- */
+.section-extracurriculars {
+    padding-top: 12rem;
+    padding-bottom: var(--vspace-4);
+    margin-top: 4rem;
+}
+
+.extracurriculars-header {
+    margin-top: 0;
+    margin-bottom: var(--vspace-2);
+    text-align: center;
+    font-family: var(--font-2);
+    font-weight: 400;
+    font-size: var(--text-xxl);
+    line-height: calc(1.375 * var(--space));
+    letter-spacing: -0.02em;
+    color: var(--color-text-dark);
+}
+
+.extracurricular-slider.swiper-container {
+    padding-bottom: var(--vspace-2);
+    overflow: hidden; /* Ensures slides stay contained */
+}
+
+/* Main container for a single slide's content */
+.extracurricular-slide {
+    display: flex;
+    align-items: center;
+    gap: 4rem;
+    text-align: left;
+    min-height: 250px; /* Ensures consistent slide height */
+}
+
+/* Image container */
+.extracurricular-slide__img-block {
+    flex-shrink: 0;
+    width: 400px;
+}
+
+/* The actual image */
+.extracurricular-slide__img {
+    display: block;
+    width: 100%;
+    height: 280px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* This is the container for the text */
+.extracurricular-slide__text-block {
+    flex-grow: 1;
+}
+
+.extracurricular-slide__text-block h4 {
+    font-family: var(--font-1);
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--color-text-dark);
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+.extracurricular-slide__text-block p {
+    font-size: 1.7rem;
+    line-height: 1.7;
+    color: var(--color-text-light);
+    margin-bottom: 0;
+}
+
+/* Responsive layout for mobile */
+@media screen and (max-width: 800px) {
+    .extracurricular-slide {
+        flex-direction: column;
+        text-align: center;
+        gap: 2.5rem;
+    }
+    .extracurricular-slide__img-block {
+        width: 100%;
+        max-width: 350px;
+    }
+}
+
+/* -------------------------------------------------------------------
+ * ## LinkedIn Section
+ * ------------------------------------------------------------------- */
+.s-linkedin {
+    padding-top: var(--vspace-4);
+    padding-bottom: var(--vspace-4);
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.linkedin-content {
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.linkedin-logo {
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+.linkedin-logo svg {
+    filter: drop-shadow(0 4px 12px rgba(0, 119, 181, 0.3));
+    transition: transform 0.3s ease;
+}
+
+.linkedin-logo svg:hover {
+    transform: scale(1.05);
+}
+
+.linkedin-content h3 {
+    font-family: var(--font-1);
+    font-size: 2.8rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    margin-bottom: 1.5rem;
+    line-height: 1.3;
+}
+
+.linkedin-message {
+    font-size: 1.8rem;
+    line-height: 1.7;
+    color: var(--color-text-light);
+    margin-bottom: 3rem;
+    font-weight: 400;
+}
+
+.linkedin-content .btn {
+    font-size: 1.6rem;
+    padding: 1.2rem 2.4rem;
+    background: #0077B5;
+    border-color: #0077B5;
+    transition: all 0.3s ease;
+}
+
+.linkedin-content .btn:hover {
+    background: #005885;
+    border-color: #005885;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 119, 181, 0.3);
+}
+
+/* Slider Navigation Buttons */
+.extracurricular-slider .swiper-button-next,
+.extracurricular-slider .swiper-button-prev {
+    color: var(--color-text-dark);
+    background: rgba(255, 255, 255, 0.9);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.extracurricular-slider .swiper-button-next:hover,
+.extracurricular-slider .swiper-button-prev:hover {
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transform: scale(1.05);
+}
+
+.extracurricular-slider .swiper-button-next::after,
+.extracurricular-slider .swiper-button-prev::after {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* Slider Pagination */
+.extracurricular-slider .swiper-pagination-bullet {
+    background: var(--color-text-dark);
+    opacity: 0.3;
+    transition: all 0.3s ease;
+}
+
+.extracurricular-slider .swiper-pagination-bullet-active {
+    opacity: 1;
+    background: var(--color-text-dark);
+    transform: scale(1.2);
+}

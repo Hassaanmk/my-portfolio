@@ -204,6 +204,22 @@
             }
         });
 
+        // Initialize extracurriculars slider
+        const extracurricularSwiper = new Swiper('.extracurricular-slider', {
+            slidesPerView: 1,
+            spaceBetween: 30,
+            loop: false,
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+                type: 'bullets',
+            },
+            autoplay: {
+                delay: 5000,
+                disableOnInteraction: false,
+            },
+        });
+
     }; // end ssSwiper
 
 
