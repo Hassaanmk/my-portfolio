@@ -4504,6 +4504,12 @@ td:last-child {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
 }
 
+/* Slight zoom in for medal slide – fill frame, center subject */
+.extracurricular-slide__img--medal {
+    object-fit: cover;
+    object-position: center 45%;
+}
+
 /* This is the container for the text */
 .extracurricular-slide__text-block {
     flex-grow: 1;
