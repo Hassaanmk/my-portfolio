@@ -1,2 +1,6 @@
-<svg width="0" height="0" viewBox="0 0 0 0" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="104" height="40" viewBox="0 0 104 40" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="HMK monogram">
+  <title>HMK</title>
+  <path d="M0 5 H7 V16 H17 V5 H24 V35 H17 V23 H7 V35 H0 Z" fill="#F4F5F4"/>
+  <path d="M32 35 V5 H40 L48 23 L56 5 H64 V35 H57 V17 L49 34 H47 L39 17 V35 Z" fill="#F4F5F4"/>
+  <path d="M72 5 H79 V17 L91 5 H101 L86 20 L101 35 H91 L79 23 V35 H72 Z" fill="#D4602F"/>
 </svg>

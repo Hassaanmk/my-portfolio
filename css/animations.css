@@ -1,0 +1,1492 @@
+/* ===================================================================
+ * Motion + layout layer
+ *
+ * Loaded after styles.css. Everything here animates only `transform`
+ * and `opacity`, and every effect is disabled under
+ * `prefers-reduced-motion: reduce` (see the kill switch at the end).
+ * ------------------------------------------------------------------- */
+
+
+/* ===================================================================
+ * 1. Tokens
+ * ------------------------------------------------------------------- */
+:root {
+    --ease-out    : cubic-bezier(0.22, 0.61, 0.36, 1);
+    --ease-out-back: cubic-bezier(0.34, 1.32, 0.64, 1);
+    --ease-in-out : cubic-bezier(0.65, 0.05, 0.36, 1);
+
+    --dur-fast  : 180ms;
+    --dur-base  : 260ms;
+    --dur-slow  : 520ms;
+    --dur-reveal: 720ms;
+
+    --radius-sm: 4px;
+    --radius-md: 10px;
+    --radius-lg: 18px;
+
+    --shadow-1: 0 1px 2px rgba(24, 24, 24, 0.06), 0 2px 8px rgba(24, 24, 24, 0.05);
+    --shadow-2: 0 4px 12px rgba(24, 24, 24, 0.08), 0 12px 32px rgba(24, 24, 24, 0.08);
+    --shadow-3: 0 10px 24px rgba(24, 24, 24, 0.10), 0 28px 60px rgba(24, 24, 24, 0.13);
+
+    --accent      : var(--color-1);
+    --accent-deep : var(--color-1-dark);
+}
+
+
+/* ===================================================================
+ * 2. Skip link
+ * ------------------------------------------------------------------- */
+.skip-link {
+    position        : fixed;
+    top             : 0;
+    left            : 0;
+    z-index         : 900;
+    padding         : 1.2rem 2rem;
+    background-color: var(--color-text-dark);
+    color           : var(--color-white);
+    font-family     : var(--font-1);
+    font-size       : 1.5rem;
+    text-decoration : none;
+    transform       : translateY(-120%);
+    transition      : transform var(--dur-base) var(--ease-out);
+}
+
+.skip-link:focus {
+    transform: translateY(0);
+    color    : var(--color-white);
+}
+
+
+/* ===================================================================
+ * 3. Scroll progress bar
+ * ------------------------------------------------------------------- */
+.scroll-progress {
+    position      : fixed;
+    top           : 0;
+    left          : 0;
+    right         : 0;
+    height        : 3px;
+    z-index       : 800;
+    pointer-events: none;
+    background    : transparent;
+}
+
+.scroll-progress__bar {
+    display         : block;
+    height          : 100%;
+    width           : 100%;
+    transform       : scaleX(0);
+    transform-origin: 0 50%;
+    background      : linear-gradient(90deg, var(--accent) 0%, var(--color-1-light) 100%);
+    will-change     : transform;
+}
+
+
+/* ===================================================================
+ * 4. Custom cursor (fine pointers only)
+ * ------------------------------------------------------------------- */
+.cursor-dot,
+.cursor-ring {
+    display       : none;
+    position      : fixed;
+    top           : 0;
+    left          : 0;
+    z-index       : 999;
+    border-radius : 50%;
+    pointer-events: none;
+    opacity       : 0;
+    transition    : opacity var(--dur-base) var(--ease-out);
+}
+
+.cursor-dot {
+    width           : 6px;
+    height          : 6px;
+    margin          : -3px 0 0 -3px;
+    background-color: var(--accent);
+}
+
+/* grows via `scale`, not width/height/margin, so hovering never
+   triggers layout — `scale` is separate from the JS-driven transform */
+.cursor-ring {
+    width     : 34px;
+    height    : 34px;
+    margin    : -17px 0 0 -17px;
+    border    : 1px solid var(--accent);
+    scale     : 1;
+    transition: opacity var(--dur-base) var(--ease-out),
+                scale var(--dur-base) var(--ease-out),
+                background-color var(--dur-base) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    html.has-cursor .cursor-dot,
+    html.has-cursor .cursor-ring {
+        display: block;
+    }
+
+    html.cursor-ready .cursor-dot,
+    html.cursor-ready .cursor-ring {
+        opacity: 1;
+    }
+
+    html.cursor-hot .cursor-ring {
+        scale           : 1.65;
+        background-color: rgba(201, 80, 42, 0.10);
+    }
+
+    html.cursor-hot .cursor-dot {
+        opacity: 0;
+    }
+}
+
+
+/* ===================================================================
+ * 5. Reveal utility
+ * ------------------------------------------------------------------- */
+.js [data-reveal] {
+    opacity   : 0;
+    transform : translate3d(0, 34px, 0);
+    transition: opacity var(--dur-reveal) var(--ease-out),
+                transform var(--dur-reveal) var(--ease-out);
+    transition-delay: var(--reveal-delay, 0ms);
+}
+
+.js [data-reveal].is-revealed {
+    opacity  : 1;
+    transform: translate3d(0, 0, 0);
+}
+
+
+/* ===================================================================
+ * 6. Line-mask headings
+ * ------------------------------------------------------------------- */
+.line-mask {
+    display  : block;
+    overflow : hidden;
+    padding-bottom: 0.06em;
+    margin-bottom: -0.06em;
+}
+
+.line-inner {
+    display  : block;
+    transform: translate3d(0, 105%, 0);
+    transition: transform var(--dur-reveal) var(--ease-out);
+    transition-delay: var(--line-delay, 0ms);
+}
+
+.no-js .line-inner {
+    transform: none;
+}
+
+/* hero headline is driven by the template's .ss-show preloader flag */
+.ss-show .s-intro__content-title .line-inner {
+    transform: translate3d(0, 0, 0);
+}
+
+.s-intro__content-title .line-inner {
+    transition-duration: 900ms;
+}
+
+.s-intro__content-title .line-mask:nth-child(1) .line-inner { transition-delay: 120ms; }
+.s-intro__content-title .line-mask:nth-child(2) .line-inner { transition-delay: 230ms; }
+.s-intro__content-title .line-mask:nth-child(3) .line-inner { transition-delay: 340ms; }
+
+/* section headings are driven by the scroll observer */
+[data-reveal].is-revealed .line-inner,
+[data-reveal] .line-inner.is-revealed {
+    transform: translate3d(0, 0, 0);
+}
+
+
+/* ===================================================================
+ * 7. Header: sticky slide + nav underline sweep
+ * ------------------------------------------------------------------- */
+.s-header {
+    transition: transform var(--dur-slow) var(--ease-out),
+                background-color var(--dur-slow) var(--ease-out),
+                box-shadow var(--dur-slow) var(--ease-out);
+}
+
+.s-header.sticky.scrolling {
+    box-shadow: var(--shadow-1);
+}
+
+.s-header__menu-links a {
+    position: relative;
+}
+
+.s-header__menu-links .nav-label {
+    position: relative;
+    display : inline-block;
+}
+
+.s-header__menu-links .nav-label::after {
+    content         : "";
+    position        : absolute;
+    left            : 0;
+    right           : 0;
+    bottom          : -4px;
+    height          : 2px;
+    background-color: var(--accent);
+    transform       : scaleX(0);
+    transform-origin: 100% 50%;
+    transition      : transform var(--dur-base) var(--ease-out);
+}
+
+.s-header__menu-links a:hover .nav-label::after,
+.s-header__menu-links a:focus-visible .nav-label::after,
+.s-header__menu-links .current a .nav-label::after {
+    transform       : scaleX(1);
+    transform-origin: 0 50%;
+}
+
+/* staggered mobile menu links */
+@media screen and (max-width: 900px) {
+    .js .s-header__menu-links li {
+        opacity   : 0;
+        transform : translate3d(0, 18px, 0);
+        transition: opacity var(--dur-base) var(--ease-out),
+                    transform var(--dur-base) var(--ease-out);
+    }
+
+    .js .menu-is-open .s-header__menu-links li,
+    .js body.menu-is-open .s-header__menu-links li {
+        opacity  : 1;
+        transform: translate3d(0, 0, 0);
+    }
+
+    .js .s-header__menu-links li:nth-child(1) { transition-delay:  60ms; }
+    .js .s-header__menu-links li:nth-child(2) { transition-delay: 120ms; }
+    .js .s-header__menu-links li:nth-child(3) { transition-delay: 180ms; }
+    .js .s-header__menu-links li:nth-child(4) { transition-delay: 240ms; }
+}
+
+
+/* ===================================================================
+ * 8. Hero: parallax + 3D pointer tilt + scroll cue
+ * ------------------------------------------------------------------- */
+/* the template sizes this for a shorter headline; this name needs a
+   smaller step so it lands in 5 lines instead of 6 */
+.s-intro__content-title {
+    font-size: clamp(3.1rem, 3.7vw, 6.6rem);
+}
+
+/* z-index 1 makes this a stacking context, so the scrims below stay
+   contained inside the photo and never dim the hero UI (all z-index 2) */
+.s-intro__content-media {
+    z-index    : 1;
+    perspective: 1400px;
+}
+
+/* Legibility scrims.
+   White UI (CV button, social icons, mobile headline) sits on top of a
+   bright photo, so the photo needs a controlled dark falloff. */
+.s-intro__content-media::after {
+    z-index   : 4;
+    opacity   : 1;
+    background: linear-gradient(0deg,
+                    rgba(0, 0, 0, 0.80) 0%,
+                    rgba(0, 0, 0, 0.42) 26%,
+                    rgba(0, 0, 0, 0.00) 62%);
+}
+
+.s-intro__content-media::before {
+    z-index   : 4;
+    background: linear-gradient(270deg,
+                    rgba(0, 0, 0, 0.74) 0%,
+                    rgba(0, 0, 0, 0.52) 13%,
+                    rgba(0, 0, 0, 0.00) 34%);
+}
+
+@media screen and (max-width: 900px) {
+    /* headline sits directly over the photo at this width */
+    .s-intro__content-media::after {
+        background: linear-gradient(0deg,
+                        rgba(0, 0, 0, 0.82) 0%,
+                        rgba(0, 0, 0, 0.66) 45%,
+                        rgba(0, 0, 0, 0.58) 100%);
+    }
+
+    .s-intro__content-media::before {
+        background: none;
+    }
+}
+
+.hero-media__parallax {
+    position       : relative;
+    z-index        : 1;
+    width          : 100%;
+    height         : 100%;
+    transform-style: preserve-3d;
+    transform      : translate3d(0, var(--hero-shift, 0px), 0)
+                     rotateX(var(--hero-rx, 0deg))
+                     rotateY(var(--hero-ry, 0deg))
+                     scale(1.06);
+    transition     : transform 500ms var(--ease-out);
+    will-change    : transform;
+}
+
+.hero-media__parallax picture,
+.hero-media__parallax img {
+    display: block;
+    width  : 100%;
+    height : 100%;
+}
+
+.s-intro__scroll-down .scroll-icon {
+    animation: scroll-bob 2.4s var(--ease-in-out) infinite;
+}
+
+@keyframes scroll-bob {
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    50%      { transform: translate3d(0, 8px, 0); }
+}
+
+.s-intro__social li a {
+    display   : inline-block;
+    transition: transform var(--dur-base) var(--ease-out-back);
+}
+
+.s-intro__social li a:hover,
+.s-intro__social li a:focus-visible {
+    transform: translate3d(0, -4px, 0) scale(1.12);
+}
+
+
+/* ===================================================================
+ * 9. Credential strip
+ * ------------------------------------------------------------------- */
+.s-credentials {
+    background-color: var(--color-gray-10);
+    padding-top     : var(--vspace-2);
+    padding-bottom  : var(--vspace-2);
+    border-bottom   : 1px solid var(--color-gray-11);
+}
+
+.credential-strip {
+    display              : grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap                  : var(--vspace-1);
+    margin               : 0;
+    padding              : 0;
+    list-style           : none;
+}
+
+.credential-strip__item {
+    position     : relative;
+    padding-left : 2rem;
+    margin       : 0;
+    border-left  : 2px solid var(--color-gray-11);
+    transition   : border-color var(--dur-base) var(--ease-out);
+}
+
+.credential-strip__item:hover {
+    border-left-color: var(--accent);
+}
+
+.credential-strip__value {
+    display       : block;
+    font-family   : var(--font-2);
+    font-size     : clamp(2.4rem, 2.6vw, 3.4rem);
+    line-height   : 1.15;
+    letter-spacing: -0.02em;
+    color         : var(--accent-deep);
+}
+
+.credential-strip__label {
+    display    : block;
+    margin-top : 0.6rem;
+    font-family: var(--font-1);
+    font-size  : 1.5rem;
+    line-height: 1.5;
+    color      : var(--color-gray-16);
+}
+
+@media screen and (max-width: 900px) {
+    .credential-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap                  : var(--vspace-0_75);
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .credential-strip {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* ===================================================================
+ * 10. Section headers
+ * ------------------------------------------------------------------- */
+.section-header {
+    perspective: 1000px;
+}
+
+
+/* ===================================================================
+ * 11. About blocks: differentiated weight + 3D hover lift
+ * ------------------------------------------------------------------- */
+.s-about__blocks {
+    perspective: 1400px;
+}
+
+.s-about__block {
+    padding         : var(--vspace-1) var(--vspace-0_875);
+    border-radius   : var(--radius-md);
+    background-color: var(--color-white);
+    border          : 1px solid var(--color-gray-11);
+    transform-style : preserve-3d;
+    transition      : transform var(--dur-base) var(--ease-out),
+                      box-shadow var(--dur-base) var(--ease-out),
+                      border-color var(--dur-base) var(--ease-out);
+    will-change     : transform;
+}
+
+.s-about__block:hover {
+    box-shadow  : var(--shadow-2);
+    border-color: var(--color-gray-10);
+}
+
+.s-about__block--feature {
+    background-color: var(--color-gray-9);
+    border-color    : var(--color-gray-11);
+}
+
+.s-about__block--feature .s-about__block-title::before {
+    background-color: var(--accent);
+}
+
+/* award rows that have no destination are plain text, not empty links */
+.s-about__list .s-about__static {
+    display    : block;
+    font-size  : inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    color      : var(--color-text) !important;
+}
+
+.s-about__list .is-highlight > a,
+.s-about__list .is-highlight > .s-about__static {
+    position     : relative;
+    display      : block;
+    padding-left : 1.4rem;
+}
+
+.s-about__list .is-highlight > a::before,
+.s-about__list .is-highlight > .s-about__static::before {
+    content         : "";
+    position        : absolute;
+    left            : 0;
+    top             : 0.9em;
+    width           : 6px;
+    height          : 6px;
+    border-radius   : 50%;
+    background-color: var(--accent);
+    transform       : scale(1);
+    transition      : transform var(--dur-base) var(--ease-out-back);
+}
+
+.s-about__list .is-highlight > a:hover::before {
+    transform: scale(1.9);
+}
+
+.s-about__list li {
+    transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.s-about__list a:hover,
+.s-about__list a:focus-visible {
+    color: var(--accent-deep);
+}
+
+
+/* ===================================================================
+ * 12. Works: bento grid
+ * ------------------------------------------------------------------- */
+.folio-bento {
+    display              : grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap                  : var(--vspace-1);
+    perspective          : 1600px;
+}
+
+.folio-bento .entry {
+    width          : auto;
+    flex           : initial;
+    overflow       : visible;
+    display        : flex;
+    flex-direction : column;
+    background-color: var(--color-white);
+    border         : 1px solid var(--color-gray-11);
+    border-radius  : var(--radius-lg);
+    overflow       : hidden;
+    transform-style: preserve-3d;
+    transition     : transform var(--dur-base) var(--ease-out),
+                     box-shadow var(--dur-base) var(--ease-out),
+                     border-color var(--dur-base) var(--ease-out);
+    will-change    : transform;
+}
+
+.folio-bento .entry:hover {
+    box-shadow  : var(--shadow-3);
+    border-color: var(--color-gray-10);
+}
+
+.folio-bento .entry--feature { grid-column: span 6; }
+.folio-bento .entry--half    { grid-column: span 3; }
+.folio-bento .entry--third   { grid-column: span 2; }
+
+/* feature card runs image + copy side by side */
+.folio-bento .entry--feature {
+    flex-direction: row;
+    align-items   : stretch;
+}
+
+.folio-bento .entry--feature .entry__link {
+    flex     : 0 0 58%;
+    max-width: 58%;
+}
+
+.folio-bento .entry--feature .entry__body {
+    flex           : 1 1 auto;
+    display        : flex;
+    flex-direction : column;
+    justify-content: center;
+}
+
+.folio-bento .entry__link {
+    display : block;
+    position: relative;
+}
+
+/* white ground so the padded diagram frames read as one flat surface */
+.folio-bento .entry__thumb {
+    width        : 100%;
+    height       : auto;
+    aspect-ratio : 16 / 10;
+    overflow     : hidden;
+    position     : relative;
+    background   : var(--color-white);
+}
+
+/* the feature thumb keeps the same 16:10 frame as every other card so
+   the diagram inside it is never cropped a second time */
+.folio-bento .entry--feature .entry__thumb {
+    height      : 100%;
+    min-height  : 100%;
+    aspect-ratio: auto;
+}
+
+.folio-bento .entry--feature .entry__link img {
+    object-fit      : contain;
+    object-position : center;
+    background-color: var(--color-white);
+}
+
+.folio-bento .entry__thumb picture {
+    display: block;
+    width  : 100%;
+    height : 100%;
+}
+
+.folio-bento .entry__link img {
+    width     : 100%;
+    height    : 100%;
+    object-fit: cover;
+    display   : block;
+    transform : scale(1.001);
+    transition: transform var(--dur-slow) var(--ease-out),
+                opacity var(--dur-slow) var(--ease-out);
+}
+
+.folio-bento .entry:hover .entry__link img {
+    transform: scale(1.07);
+}
+
+/* terracotta wipe overlay */
+.folio-bento .entry__link::before {
+    background-color: var(--accent);
+    opacity         : 0;
+    visibility      : visible;
+    transform       : scaleY(0);
+    transform-origin: 50% 100%;
+    transition      : transform var(--dur-base) var(--ease-out),
+                      opacity var(--dur-base) var(--ease-out);
+}
+
+.folio-bento .entry:hover .entry__link::before,
+.folio-bento .entry__link:focus-visible::before {
+    opacity  : 0.86;
+    transform: scaleY(1);
+}
+
+.folio-bento .entry__info {
+    padding   : 0 2rem;
+    width     : 100%;
+    visibility: visible;
+    opacity   : 0;
+    transform : translate(-50%, calc(-50% + 22px));
+    transition: opacity var(--dur-base) var(--ease-out),
+                transform var(--dur-base) var(--ease-out);
+    transition-delay: 60ms;
+}
+
+.folio-bento .entry:hover .entry__info,
+.folio-bento .entry__link:focus-visible .entry__info {
+    opacity  : 1;
+    transform: translate(-50%, -50%);
+}
+
+.folio-bento .entry__cat {
+    color: rgba(255, 255, 255, 0.82);
+}
+
+/* card body */
+.folio-bento .entry__body {
+    padding: var(--vspace-0_75) var(--vspace-0_75) var(--vspace-1);
+}
+
+.folio-bento .entry--feature .entry__body {
+    padding: var(--vspace-1) var(--vspace-1_25);
+}
+
+.entry__badge {
+    display         : inline-block;
+    align-self      : flex-start;
+    margin-bottom   : 1.2rem;
+    padding         : 0.35em 0.9em;
+    border-radius   : 100px;
+    background-color: var(--accent);
+    color           : var(--color-white);
+    font-family     : var(--font-1);
+    font-weight     : 600;
+    font-size       : 1.2rem;
+    letter-spacing  : 0.12em;
+    text-transform  : uppercase;
+    line-height     : 1.6;
+}
+
+.entry__headline {
+    font-family   : var(--font-2);
+    font-weight   : 400;
+    font-size     : clamp(1.9rem, 1.6vw, 2.6rem);
+    line-height   : 1.25;
+    letter-spacing: -0.015em;
+    margin        : 0 0 0.6rem;
+    color         : var(--color-text-dark);
+}
+
+.folio-bento .entry--feature .entry__headline {
+    font-size: clamp(2.6rem, 2.6vw, 4rem);
+}
+
+.entry__meta {
+    font-family   : var(--font-1);
+    font-size     : 1.4rem;
+    font-weight   : 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color         : var(--accent-deep);
+    margin-bottom : 1.2rem;
+}
+
+/* vendor.css hides .glightbox-desc with !important so GLightbox can use
+   it as a hidden description source. These blocks double as the visible
+   card copy, so the hide has to be reversed at higher specificity. */
+.folio-bento .entry__body .entry__desc {
+    display: block !important;
+}
+
+.entry__desc p {
+    font-size    : 1.55rem;
+    line-height  : 1.72;
+    color        : var(--color-gray-16);
+    margin-bottom: 0;
+    max-width    : 68ch;
+}
+
+.folio-bento .entry--feature .entry__desc p {
+    font-size: 1.7rem;
+}
+
+.entry__desc a {
+    color               : var(--accent-deep);
+    background-image    : linear-gradient(var(--accent), var(--accent));
+    background-size     : 0% 1px;
+    background-repeat   : no-repeat;
+    background-position : 0 100%;
+    transition          : background-size var(--dur-base) var(--ease-out);
+}
+
+.entry__desc a:hover,
+.entry__desc a:focus-visible {
+    background-size: 100% 1px;
+}
+
+@media screen and (max-width: 1000px) {
+    .folio-bento { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .folio-bento .entry--feature { grid-column: span 4; }
+    .folio-bento .entry--half    { grid-column: span 2; }
+    .folio-bento .entry--third   { grid-column: span 2; }
+}
+
+@media screen and (max-width: 800px) {
+    .folio-bento { grid-template-columns: 1fr; }
+    .folio-bento .entry--feature,
+    .folio-bento .entry--half,
+    .folio-bento .entry--third { grid-column: span 1; }
+
+    .folio-bento .entry--feature { flex-direction: column; }
+
+    .folio-bento .entry--feature .entry__link {
+        flex     : 1 1 auto;
+        max-width: 100%;
+    }
+
+    .folio-bento .entry--feature .entry__thumb {
+        aspect-ratio: 16 / 10;
+        min-height  : 0;
+        height      : auto;
+    }
+}
+
+
+/* ===================================================================
+ * 13. Extracurricular slider: 3D depth
+ * ------------------------------------------------------------------- */
+.extracurricular-slider.swiper-container {
+    perspective: 1600px;
+}
+
+.extracurricular-slider .swiper-slide {
+    transition: opacity var(--dur-slow) var(--ease-out);
+    opacity   : 0.25;
+}
+
+.extracurricular-slider .swiper-slide-active {
+    opacity: 1;
+}
+
+.extracurricular-slide {
+    transform-style: preserve-3d;
+    transform      : translate3d(0, 0, -140px) rotateY(9deg);
+    opacity        : 0;
+    transition     : transform 640ms var(--ease-out),
+                     opacity 640ms var(--ease-out);
+    will-change    : transform;
+}
+
+.swiper-slide-active .extracurricular-slide {
+    transform: translate3d(0, 0, 0) rotateY(0deg);
+    opacity  : 1;
+}
+
+.swiper-slide-prev .extracurricular-slide {
+    transform: translate3d(0, 0, -140px) rotateY(-9deg);
+}
+
+.extracurricular-slide__img-block {
+    perspective: 900px;
+}
+
+.extracurricular-slide__img {
+    transition: transform var(--dur-slow) var(--ease-out),
+                box-shadow var(--dur-slow) var(--ease-out);
+    will-change: transform;
+}
+
+.extracurricular-slide__img-block:hover .extracurricular-slide__img {
+    transform : translate3d(0, -6px, 0) rotateY(-6deg) rotateX(3deg) scale(1.02);
+    box-shadow: var(--shadow-3);
+}
+
+.extracurricular-slide__img-block picture {
+    display: block;
+}
+
+/* text stagger inside the active slide */
+.extracurricular-slide__text-block > * {
+    opacity   : 0;
+    transform : translate3d(0, 20px, 0);
+    transition: opacity 520ms var(--ease-out), transform 520ms var(--ease-out);
+}
+
+.swiper-slide-active .extracurricular-slide__text-block > * {
+    opacity  : 1;
+    transform: translate3d(0, 0, 0);
+}
+
+.swiper-slide-active .extracurricular-slide__text-block > *:nth-child(1) { transition-delay: 140ms; }
+.swiper-slide-active .extracurricular-slide__text-block > *:nth-child(2) { transition-delay: 240ms; }
+.swiper-slide-active .extracurricular-slide__text-block > *:nth-child(3) { transition-delay: 340ms; }
+
+.extracurricular-slider .swiper-pagination-bullet {
+    transition: transform var(--dur-base) var(--ease-out-back),
+                background-color var(--dur-base) var(--ease-out);
+}
+
+.extracurricular-slider .swiper-pagination-bullet-active {
+    transform: scale(1.35);
+}
+
+
+/* ===================================================================
+ * 14. LinkedIn section
+ * ------------------------------------------------------------------- */
+/* The backing photo was competing with the copy — faces and legible
+   text showed through behind the paragraph. Kept, but pushed down to a
+   soft desaturated texture so the type sits on a clean ground. */
+.linkedin-profile::before {
+    opacity: 0.07;
+    filter : blur(14px) grayscale(1);
+}
+
+.linkedin-profile {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.90) 100%);
+    animation : none;
+}
+
+.linkedin-message {
+    color: var(--color-gray-17);
+}
+
+.linkedin-logo {
+    perspective: 800px;
+}
+
+/* replaces the template's infinite pulse with a hover-only 3D flip:
+   motion now responds to the user instead of looping forever */
+.linkedin-logo svg,
+.linkedin-logo svg:hover {
+    animation      : none;
+    transition     : transform 620ms var(--ease-out);
+    transform-style: preserve-3d;
+    will-change    : transform;
+}
+
+.linkedin-logo:hover svg,
+.linkedin-logo svg:hover,
+.linkedin-profile:hover .linkedin-logo svg {
+    transform: rotateY(360deg) scale(1.04);
+}
+
+
+/* pointer-driven tilt needs a short transition so it tracks the cursor */
+.tilt-card.is-tilting {
+    transition: transform 90ms linear,
+                box-shadow var(--dur-base) var(--ease-out),
+                border-color var(--dur-base) var(--ease-out);
+}
+
+
+/* ===================================================================
+ * 15. Buttons: magnetic pull + fill wipe
+ * ------------------------------------------------------------------- */
+.btn--magnetic {
+    transform  : translate3d(var(--mx, 0px), var(--my, 0px), 0);
+    transition : transform 420ms var(--ease-out-back);
+    will-change: transform;
+}
+
+.s-footer__buttons .btn,
+.btn--large {
+    position: relative;
+    overflow: hidden;
+}
+
+.s-footer__buttons .btn::after {
+    content         : "";
+    position        : absolute;
+    inset           : 0;
+    background-color: var(--accent);
+    transform       : scaleX(0);
+    transform-origin: 0 50%;
+    transition      : transform 420ms var(--ease-out);
+    z-index         : -1;
+}
+
+.s-footer__buttons .btn:hover::after,
+.s-footer__buttons .btn:focus-visible::after {
+    transform: scaleX(1);
+}
+
+
+/* ===================================================================
+ * 16. Footer link sweeps + back to top
+ * ------------------------------------------------------------------- */
+.s-footer .link-list a {
+    position: relative;
+    display : inline-block;
+}
+
+.s-footer .link-list a::after {
+    content         : "";
+    position        : absolute;
+    left            : 0;
+    right           : 0;
+    bottom          : -2px;
+    height          : 1px;
+    background-color: currentColor;
+    transform       : scaleX(0);
+    transform-origin: 100% 50%;
+    transition      : transform var(--dur-base) var(--ease-out);
+}
+
+.s-footer .link-list a:hover::after,
+.s-footer .link-list a:focus-visible::after {
+    transform       : scaleX(1);
+    transform-origin: 0 50%;
+}
+
+.s-footer__social li a {
+    display   : inline-block;
+    transition: transform var(--dur-base) var(--ease-out-back);
+}
+
+.s-footer__social li a:hover,
+.s-footer__social li a:focus-visible {
+    transform: translate3d(0, -4px, 0) scale(1.12);
+}
+
+.ss-go-top a {
+    transition: transform var(--dur-base) var(--ease-out-back);
+}
+
+.ss-go-top a:hover,
+.ss-go-top a:focus-visible {
+    transform: translate3d(0, -5px, 0);
+}
+
+
+/* ===================================================================
+ * 17. Image decode fade-in
+ * ------------------------------------------------------------------- */
+.js img[loading="lazy"] {
+    opacity   : 0;
+    transition: opacity 600ms var(--ease-out);
+}
+
+.js img[loading="lazy"].is-loaded,
+.no-js img[loading="lazy"] {
+    opacity: 1;
+}
+
+
+/* ===================================================================
+ * 17b. Contrast corrections
+ *
+ * The template's secondary grey (--color-text-light, #767776) measures
+ * 3.87-4.37:1 — under the 4.5:1 AA floor for body-size text — both on
+ * the light panels and on the dark footer. Darken it on light grounds,
+ * lighten it on dark ones. Hue and character are unchanged.
+ * ------------------------------------------------------------------- */
+.s-about__list span {
+    color: var(--color-gray-16) !important;
+}
+
+.extracurricular-slide__text-block p {
+    color: var(--color-gray-17);
+}
+
+.s-footer .link-list a {
+    color: var(--color-gray-12);
+}
+
+.s-footer .link-list a:hover,
+.s-footer .link-list a:focus-visible {
+    color: var(--color-white);
+}
+
+
+/* ===================================================================
+ * 18. Focus visibility (never removed, only improved)
+ * ------------------------------------------------------------------- */
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible {
+    outline       : 2px solid var(--accent-deep);
+    outline-offset: 3px;
+}
+
+/* the template zeroes the outline on these two, leaving keyboard users
+   with no visible focus indicator */
+.s-header__logo a:focus-visible,
+.s-header__menu-toggle:focus-visible {
+    outline-width : 2px !important;
+    outline-style : solid !important;
+    outline-color : var(--accent) !important;
+    outline-offset: 4px;
+}
+
+.s-footer .link-list a:focus-visible,
+.s-footer__social a:focus-visible,
+.s-intro__social a:focus-visible {
+    outline       : 2px solid var(--color-white);
+    outline-offset: 3px;
+}
+
+
+/* ===================================================================
+ * 19. Reduced-motion kill switch
+ *
+ * Everything above degrades to a static, fully-visible page.
+ * ------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration       : 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration      : 0.01ms !important;
+        transition-delay         : 0ms !important;
+        scroll-behavior          : auto !important;
+    }
+
+    .js [data-reveal],
+    .js [data-reveal].is-revealed {
+        opacity  : 1 !important;
+        transform: none !important;
+    }
+
+    .line-inner {
+        transform: none !important;
+    }
+
+    .hero-media__parallax {
+        transform: scale(1.06) !important;
+    }
+
+    .folio-bento .entry__info,
+    .extracurricular-slide,
+    .extracurricular-slide__text-block > * {
+        opacity  : 1 !important;
+        transform: none !important;
+    }
+
+    .folio-bento .entry__info {
+        opacity  : 0 !important;
+        transform: translate(-50%, -50%) !important;
+    }
+
+    .folio-bento .entry:hover .entry__info,
+    .folio-bento .entry__link:focus-visible .entry__info {
+        opacity: 1 !important;
+    }
+
+    .extracurricular-slider .swiper-slide {
+        opacity: 1 !important;
+    }
+
+    .js img[loading="lazy"] {
+        opacity: 1 !important;
+    }
+
+    .cursor-dot,
+    .cursor-ring {
+        display: none !important;
+    }
+
+    .s-intro__scroll-down .scroll-icon {
+        animation: none !important;
+    }
+}
+
+
+/* ===================================================================
+ * THEME TOGGLE CONTROL
+ * =================================================================== */
+.theme-toggle {
+    /* .s-header__block is display:block, so auto margins cannot place this.
+       Pin it to the header bar instead. */
+    display        : inline-flex;
+    align-items    : center;
+    justify-content: center;
+    position       : absolute;
+    top            : calc((var(--header-height) - 44px) / 2);
+    left           : 118px;  /* clears the 102px logo; stays left of the mobile menu button */
+    z-index        : 102;
+    width          : 44px;
+    height         : 44px;
+    padding        : 0;
+    border         : 1px solid rgba(255, 255, 255, 0.28);
+    border-radius  : 50%;
+    background     : transparent;
+    color          : #f4f5f4;
+    cursor         : pointer;
+    transition     : background-color 200ms var(--ease-out),
+                     border-color 200ms var(--ease-out),
+                     transform 200ms var(--ease-out);
+}
+
+.theme-toggle:hover {
+    background  : rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.55);
+    transform   : translateY(-1px);
+}
+
+.theme-toggle:focus-visible {
+    outline       : 2px solid var(--color-1);
+    outline-offset: 3px;
+}
+
+.theme-toggle__icon {
+    position  : absolute;
+    transition: opacity 220ms var(--ease-out), transform 320ms var(--ease-out);
+}
+
+/* Light theme shows the moon (the action available: go dark). */
+.theme-toggle__icon--sun  { opacity: 0; transform: rotate(-90deg) scale(0.6); }
+.theme-toggle__icon--moon { opacity: 1; transform: rotate(0deg) scale(1); }
+
+[data-theme="dark"] .theme-toggle__icon--sun  { opacity: 1; transform: rotate(0deg) scale(1); }
+[data-theme="dark"] .theme-toggle__icon--moon { opacity: 0; transform: rotate(90deg) scale(0.6); }
+
+.s-header__block { position: relative; }
+
+@media screen and (max-width: 900px) {
+    .theme-toggle {
+        left: 160px;
+    }
+}
+
+
+/* ===================================================================
+ * DARK THEME
+ * Inverts the neutral ramp so every component that reads a gray token
+ * flips automatically, then re-pins the surfaces that are hardcoded.
+ * =================================================================== */
+[data-theme="dark"] {
+    --color-gray-19: #f4f5f4;
+    --color-gray-18: #eceeec;
+    --color-gray-17: #d4d6d4;
+    --color-gray-16: #bdbebd;
+    --color-gray-15: #a5a7a5;
+    --color-gray-14: #8e8f8e;
+    --color-gray-13: #767776;
+    --color-gray-12: #5e5f5e;
+    --color-gray-11: #474747;
+    --color-gray-10: #2f302f;
+    --color-gray-9 : #262726;
+    --color-gray-8 : #232423;
+    --color-gray-7 : #202120;
+    --color-gray-6 : #1e1f1e;
+    --color-gray-5 : #1c1d1c;
+    --color-gray-4 : #1a1b1a;
+    --color-gray-3 : #181918;
+    --color-gray-2 : #161716;
+    --color-gray-1 : #141514;
+    --color-white  : #141514;
+    --color-black  : #ffffff;
+
+    /* --color-3 is deliberately NOT re-tinted here: the base sheet uses it for
+       the header, mobile nav and footer *backgrounds*, which must stay dark.
+       The two places it is used as a text colour are corrected below. */
+    --color-3-light: #1a1b1a;
+    --color-3-dark : #0a0b0a;
+
+    --color-text      : #e8eae8;
+    --color-text-dark : #f4f5f4;
+    --color-text-light: #a5a7a5;
+
+    /* Lift the accent so it keeps 4.5:1 against the dark ground. */
+    --color-1      : hsla(12, 78%, 58%, 1);
+    --color-1-light: hsla(12, 78%, 66%, 1);
+
+    --color-body-bg: #141514;
+    --color-border : rgba(255, 255, 255, .12);
+
+    --color-btn                   : #2f302f;
+    --color-btn-text              : #f4f5f4;
+    --color-btn-hover             : #3d3e3d;
+    --color-btn-hover-text        : #ffffff;
+    --color-btn-stroke            : #e8eae8;
+    --color-btn-stroke-text       : #e8eae8;
+    --color-btn-stroke-hover      : #e8eae8;
+    --color-btn-stroke-hover-text : #141514;
+    --color-btn-primary-text      : #ffffff;
+    --color-btn-primary-hover-text: #ffffff;
+
+    --color-preloader-bg: #141514;
+    --color-loader      : #e8eae8;
+
+    color-scheme: dark;
+}
+
+[data-theme="dark"] body,
+[data-theme="dark"] .s-pagewrap {
+    background-color: var(--color-body-bg);
+    color           : var(--color-text);
+}
+
+/* The base sheet paints these with var(--color-3), which stays dark so the
+   header/footer backgrounds keep working. Re-point them at the text token. */
+[data-theme="dark"] .s-about,
+[data-theme="dark"] .s-intro__scroll-down a {
+    color: var(--color-text);
+}
+
+/* Surfaces hardcoded to white/near-white in the base template. */
+[data-theme="dark"] .s-about__block,
+[data-theme="dark"] .folio-entries .entry,
+[data-theme="dark"] .folio-bento .entry,
+[data-theme="dark"] .entry__body {
+    background-color: #1c1d1c;
+    border-color    : rgba(255, 255, 255, .10);
+}
+
+[data-theme="dark"] .folio-entries .entry__thumb {
+    background: #202120;
+}
+
+[data-theme="dark"] .s-linkedin {
+    background: linear-gradient(135deg, #1a1b1a 0%, #141514 100%);
+}
+
+[data-theme="dark"] .linkedin-profile,
+[data-theme="dark"] .linkedin-info {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+
+[data-theme="dark"] .extracurricular-slide {
+    background-color: #1c1d1c;
+}
+
+/* The header and footer are already near-black; nudge them off the body
+   ground so the sections stay visually separable in dark mode. */
+[data-theme="dark"] .s-footer {
+    background-color: #0f100f;
+}
+
+[data-theme="dark"] .s-header.sticky {
+    background-color: rgba(15, 16, 15, 0.94);
+}
+
+/* The ghost section numerals need less contrast on a dark ground. */
+[data-theme="dark"] .section-header::before,
+[data-theme="dark"] .section-header[data-num]::before {
+    opacity: 0.10;
+}
+
+/* Keep the hero CV button legible whatever the photo behind it. */
+.s-intro__btn-download .btn--stroke {
+    background: rgba(0, 0, 0, 0.28) !important;
+    backdrop-filter: blur(2px);
+}
+
+/* Theme transition — skipped for users who asked for less motion. */
+@media (prefers-reduced-motion: no-preference) {
+    body,
+    .s-pagewrap,
+    .s-about__block,
+    .folio-bento .entry,
+    .entry__body,
+    .s-footer {
+        transition: background-color 300ms var(--ease-out), color 300ms var(--ease-out);
+    }
+}
+
+
+/* ===================================================================
+ * LINKEDIN PANEL — sharpen the backdrop photo
+ *
+ * The base sheet pushed the photo behind a 90%-opaque white sheet and
+ * then blurred it on top of that, so it read as grey mush. Drop the
+ * blur, lift the photo, and thin the sheet just enough that the dark
+ * body copy still clears contrast.
+ * ------------------------------------------------------------------- */
+
+.linkedin-profile {
+    background     : linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.10) 100%);
+    isolation      : isolate;
+    justify-content: flex-start;
+}
+
+/* The photo now carries the panel, so the copy needs its own plate
+   rather than a wash over the whole card. Keeping the plate on the left
+   leaves the right of the frame — where the subject actually is — clear. */
+.linkedin-info {
+    max-width      : 460px;
+    padding        : 2.6rem 2.4rem;
+    border-radius  : 14px;
+    background     : rgba(255, 255, 255, 0.90);
+    backdrop-filter: blur(6px);
+    box-shadow     : 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+@media screen and (max-width: 800px) {
+    .linkedin-profile { justify-content: center; }
+    .linkedin-info    { max-width: 100%; }
+}
+
+.linkedin-profile::before {
+    filter             : none;
+    opacity            : 0.95;
+    background-size    : cover;
+    background-position: 68% 34%;
+    transform          : scale(1.04);
+}
+
+/* Slow Ken Burns drift. The photo is 960x1280 and the panel is wide and
+   short, so a gentle pan also keeps the crop from feeling static. */
+@media (prefers-reduced-motion: no-preference) {
+    .linkedin-profile::before {
+        will-change: transform;
+        animation  : linkedinDrift 34s var(--ease-in-out, ease-in-out) infinite alternate;
+    }
+}
+
+@keyframes linkedinDrift {
+    from { transform: scale(1.04) translate3d(-1.2%, -1%, 0); }
+    to   { transform: scale(1.12) translate3d(1.2%, 1.5%, 0); }
+}
+
+[data-theme="dark"] .linkedin-profile {
+    background: linear-gradient(135deg, rgba(20, 21, 20, 0.30) 0%, rgba(20, 21, 20, 0.42) 100%);
+}
+
+[data-theme="dark"] .linkedin-info {
+    background: rgba(18, 19, 18, 0.86);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+/* The base sheet paints this heading with a hard-coded black gradient
+   clipped to the text, so the theme tokens never reach it. */
+[data-theme="dark"] .linkedin-info h3 {
+    background             : linear-gradient(135deg, #ffffff 0%, #c9cbc9 100%);
+    -webkit-background-clip: text;
+    background-clip        : text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* The mark is an inline SVG with fill="#000000" on the plate, which
+   disappears on a dark ground. Swap it for LinkedIn's own blue. */
+[data-theme="dark"] .linkedin-logo svg rect {
+    fill: #0a66c2;
+}
+
+/* On a dark ground the photo is the bright element, so it has to give
+   way to the light body copy instead of the other way round. */
+[data-theme="dark"] .linkedin-profile::before {
+    opacity: 0.78;
+}
+
+/* .btn--primary resolves to near-black, which vanishes against the dark
+   plate. Give the call to action LinkedIn's blue instead. */
+[data-theme="dark"] .linkedin-info .btn {
+    background: linear-gradient(135deg, #0a66c2 0%, #0b7ae0 100%);
+    color     : #ffffff;
+    box-shadow: 0 8px 25px rgba(10, 102, 194, 0.35);
+}
+
+[data-theme="dark"] .linkedin-info .btn:hover,
+[data-theme="dark"] .linkedin-info .btn:focus {
+    background: linear-gradient(135deg, #0b7ae0 0%, #2a93f5 100%);
+}
+
+
+/* ===================================================================
+ * SECTION NUMERAL PARALLAX
+ *
+ * The ghost 01/02/03 numerals drift against the heading as the section
+ * crosses the viewport. JS writes --num-shift; CSS does the moving.
+ * ------------------------------------------------------------------- */
+
+.section-header::before {
+    transform: translate3d(0, calc(var(--num-shift, 0) * 1px), 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .section-header::before { transform: none; }
+}
+
+
+/* ===================================================================
+ * SCROLL-VELOCITY SKEW
+ *
+ * The works grid leans very slightly into the direction of travel and
+ * springs back when the scroll stops. Capped hard so it reads as weight,
+ * not as a glitch.
+ * ------------------------------------------------------------------- */
+
+.folio-bento,
+.folio-entries {
+    transform: skewY(calc(var(--scroll-skew, 0) * 1deg));
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .folio-bento,
+    .folio-entries { transform: none; }
+}
+
+
+/* ===================================================================
+ * CREDENTIAL STRIP — light sweep on reveal
+ * ------------------------------------------------------------------- */
+
+.credential-strip__item {
+    position: relative;
+    overflow: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+
+    .credential-strip__item::after {
+        content       : '';
+        position      : absolute;
+        top           : 0;
+        bottom        : 0;
+        left          : -60%;
+        width         : 45%;
+        pointer-events: none;
+        background    : linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.55) 50%, transparent 100%);
+        transform     : skewX(-18deg);
+        opacity       : 0;
+    }
+
+    .credential-strip__item.is-revealed::after {
+        animation: credentialSweep 1100ms var(--ease-out, ease-out) var(--reveal-delay, 0ms) 1 both;
+    }
+
+    [data-theme="dark"] .credential-strip__item::after {
+        background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.14) 50%, transparent 100%);
+    }
+}
+
+@keyframes credentialSweep {
+    0%   { opacity: 0;   left: -60%; }
+    12%  { opacity: 1; }
+    88%  { opacity: 1; }
+    100% { opacity: 0;   left: 130%; }
+}
+
+
+/* ===================================================================
+ * CV BUTTON — pulse the download affordance once it scrolls into view
+ * ------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: no-preference) {
+
+    .s-intro__btn-download .btn--stroke::after {
+        content       : '';
+        position      : absolute;
+        inset         : -1px;
+        border        : 1px solid currentColor;
+        border-radius : inherit;
+        pointer-events: none;
+        opacity       : 0;
+        animation     : cvPulse 3.2s var(--ease-out, ease-out) 1.6s 3 both;
+    }
+
+    .s-intro__btn-download .btn--stroke {
+        position: relative;
+        overflow: visible;
+    }
+}
+
+@keyframes cvPulse {
+    0%   { opacity: 0.65; transform: scale(1); }
+    45%  { opacity: 0;    transform: scale(1.12); }
+    100% { opacity: 0;    transform: scale(1.12); }
+}

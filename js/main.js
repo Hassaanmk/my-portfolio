@@ -8,6 +8,38 @@
     'use strict';
 
 
+   /* shared rAF scroll bus
+    *
+    * One scroll listener for every scroll-driven feature below, so the
+    * page never runs more than one handler per animation frame.
+    * -------------------------------------------------- */
+    const onScrollFrame = (function() {
+
+        const subscribers = [];
+        let ticking = false;
+
+        function flush() {
+            ticking = false;
+            const y = window.pageYOffset || document.documentElement.scrollTop || 0;
+            for (let i = 0; i < subscribers.length; i++) {
+                subscribers[i](y);
+            }
+        }
+
+        window.addEventListener('scroll', function() {
+            if (ticking) return;
+            ticking = true;
+            window.requestAnimationFrame(flush);
+        }, { passive: true });
+
+        return function(fn) {
+            subscribers.push(fn);
+            fn(window.pageYOffset || 0);
+        };
+
+    })();
+
+
    /* preloader
     * -------------------------------------------------- */
     const ssPreloader = function() {
@@ -48,9 +80,9 @@
             triggerHeight = hero.offsetHeight - 170;
         }, 300);
 
-        window.addEventListener('scroll', function () {
+        onScrollFrame(function (loc) {
 
-            let loc = window.scrollY;
+            if (typeof triggerHeight === 'undefined') triggerHeight = hero.offsetHeight - 170;
 
             if (loc > triggerHeight) {
                 hdr.classList.add('sticky');
@@ -120,16 +152,12 @@
     const ssScrollSpy = function() {
 
         const sections = document.querySelectorAll('.target-section');
-        if (!sections) return;
+        if (!sections.length) return;
 
-        // Add an event listener listening for scroll
-        window.addEventListener('scroll', navHighlight);
+        onScrollFrame(navHighlight);
 
-        function navHighlight() {
-        
-            // Get current scroll position
-            let scrollY = window.pageYOffset;
-        
+        function navHighlight(scrollY) {
+
             // Loop through sections to get height(including padding and border), 
             // top and ID values for each
             sections.forEach(function(current) {
@@ -143,10 +171,13 @@
                 * sectionId variable we are getting while looping through sections as 
                 * an selector
                 */
+                const link = document.querySelector('.s-header__nav a[href*=' + sectionId + ']');
+                if (!link) return;
+
                 if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
-                    document.querySelector('.s-header__nav a[href*=' + sectionId + ']').parentNode.classList.add('current');
+                    link.parentNode.classList.add('current');
                 } else {
-                    document.querySelector('.s-header__nav a[href*=' + sectionId + ']').parentNode.classList.remove('current');
+                    link.parentNode.classList.remove('current');
                 }
             });
         }
@@ -178,47 +209,67 @@
     * ------------------------------------------------------ */ 
     const ssSwiper = function() {
 
-        const testimonialsSwiper = new Swiper('.s-testimonials__slider', {
+        if (typeof Swiper === 'undefined') return;
 
-            slidesPerView: 1,
-            pagination: {
-                el: '.swiper-pagination',
-                clickable: true,
-            },
-            breakpoints: {
-                // when window width is > 400px
-                401: {
-                    slidesPerView: 1,
-                    spaceBetween: 20
+        if (document.querySelector('.s-testimonials__slider')) {
+            new Swiper('.s-testimonials__slider', {
+
+                slidesPerView: 1,
+                pagination: {
+                    el: '.swiper-pagination',
+                    clickable: true,
                 },
-                // when window width is > 800px
-                801: {
-                    slidesPerView: 2,
-                    spaceBetween: 50
-                },
-                // when window width is > 1180px
-                1181: {
-                    slidesPerView: 3,
-                    spaceBetween: 48
+                breakpoints: {
+                    // when window width is > 400px
+                    401: {
+                        slidesPerView: 1,
+                        spaceBetween: 20
+                    },
+                    // when window width is > 800px
+                    801: {
+                        slidesPerView: 2,
+                        spaceBetween: 50
+                    },
+                    // when window width is > 1180px
+                    1181: {
+                        slidesPerView: 3,
+                        spaceBetween: 48
+                    }
                 }
-            }
-        });
+            });
+        }
 
         // Initialize extracurriculars slider
-        const extracurricularSwiper = new Swiper('.extracurricular-slider', {
-            slidesPerView: 1,
-            spaceBetween: 30,
-            loop: false,
-            pagination: {
-                el: '.swiper-pagination',
-                clickable: true,
-                type: 'bullets',
-            },
-            autoplay: {
-                delay: 5000,
-                disableOnInteraction: false,
-            },
-        });
+        if (document.querySelector('.extracurricular-slider')) {
+
+            const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            new Swiper('.extracurricular-slider', {
+                slidesPerView: 1,
+                spaceBetween: 30,
+                loop: false,
+                speed: 700,
+                watchSlidesProgress: true,
+                a11y: {
+                    enabled: true,
+                    prevSlideMessage: 'Previous highlight',
+                    nextSlideMessage: 'Next highlight'
+                },
+                keyboard: {
+                    enabled: true,
+                    onlyInViewport: true
+                },
+                pagination: {
+                    el: '.swiper-pagination',
+                    clickable: true,
+                    type: 'bullets',
+                },
+                autoplay: reduced ? false : {
+                    delay: 6000,
+                    disableOnInteraction: false,
+                },
+            });
+        }
 
     }; // end ssSwiper
 
@@ -255,11 +306,8 @@
 
         if (!goTopButton) return;
 
-        // Show or hide the button
-        if (window.scrollY >= pxShow) goTopButton.classList.add("link-is-visible");
-
-        window.addEventListener('scroll', function() {
-            if (window.scrollY >= pxShow) {
+        onScrollFrame(function(scrollY) {
+            if (scrollY >= pxShow) {
                 if(!goTopButton.classList.contains('link-is-visible')) goTopButton.classList.add("link-is-visible")
             } else {
                 goTopButton.classList.remove("link-is-visible")

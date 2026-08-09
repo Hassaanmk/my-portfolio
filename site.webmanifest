@@ -1,1 +1,1 @@
-{"name":"","short_name":"","icons":[{"src":"/android-chrome-192x192.png","sizes":"192x192","type":"image/png"},{"src":"/android-chrome-512x512.png","sizes":"512x512","type":"image/png"}],"theme_color":"#ffffff","background_color":"#ffffff","display":"standalone"}
+{"name": "Hassaan Muhammad Khan \u2014 AI & Machine Learning Researcher", "short_name": "Hassaan M. Khan", "start_url": "/", "icons": [{"src": "images/favicon.svg", "sizes": "any", "type": "image/svg+xml"}], "theme_color": "#c9502a", "background_color": "#eceeec", "display": "standalone"}
