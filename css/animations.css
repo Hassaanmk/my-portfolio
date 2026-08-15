@@ -124,6 +124,14 @@
         display: block;
     }
 
+    /* the custom dot/ring replaces the pointer entirely once JS confirms
+       a fine pointer is present — without this the OS arrow stays visible
+       underneath the ring, showing two cursors at once */
+    html.has-cursor,
+    html.has-cursor * {
+        cursor: none !important;
+    }
+
     html.cursor-ready .cursor-dot,
     html.cursor-ready .cursor-ring {
         opacity: 1;
@@ -1322,9 +1330,9 @@ button:focus-visible,
 
 .linkedin-profile::before {
     filter             : none;
-    opacity            : 0.95;
-    background-size    : cover;
-    background-position: 68% 34%;
+    opacity            : 0.6;
+    background-size    : 1400px auto;
+    background-position: 24% 40%;
     transform          : scale(1.04);
 }
 
@@ -1369,7 +1377,7 @@ button:focus-visible,
 /* On a dark ground the photo is the bright element, so it has to give
    way to the light body copy instead of the other way round. */
 [data-theme="dark"] .linkedin-profile::before {
-    opacity: 0.78;
+    opacity: 0.5;
 }
 
 /* .btn--primary resolves to near-black, which vanishes against the dark

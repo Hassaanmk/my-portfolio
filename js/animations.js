@@ -351,13 +351,15 @@
         const hotSelector = 'a, button, .btn, .entry, input, textarea, [role="button"]';
 
         document.addEventListener('mouseover', function (e) {
-            if (e.target.closest && e.target.closest(hotSelector)) {
+            const hot = e.target.closest && e.target.closest(hotSelector);
+            if (hot && !hot.contains(e.relatedTarget)) {
                 html.classList.add('cursor-hot');
             }
         }, { passive: true });
 
         document.addEventListener('mouseout', function (e) {
-            if (e.target.closest && e.target.closest(hotSelector)) {
+            const hot = e.target.closest && e.target.closest(hotSelector);
+            if (hot && !hot.contains(e.relatedTarget)) {
                 html.classList.remove('cursor-hot');
             }
         }, { passive: true });

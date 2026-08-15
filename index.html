@@ -447,6 +447,35 @@
                             </p>
                         </div>
                     </div>
+                </div> <div class="column entry entry--feature tilt-card" data-reveal>
+                    <a href="images/opt/work-cvrag-1280.jpg" class="entry__link glightbox" data-glightbox="title: RAG over CV Documents; description: .entry__desc-07">
+                        <div class="entry__thumb">
+                            <picture>
+                                <source type="image/webp" srcset="images/opt/work-cvrag-640.webp 640w, images/opt/work-cvrag-1280.webp 1280w" sizes="(max-width: 800px) 100vw, 60vw">
+                                <img src="images/opt/work-cvrag-1280.jpg"
+                                     srcset="images/opt/work-cvrag-640.jpg 640w, images/opt/work-cvrag-1280.jpg 1280w"
+                                     sizes="(max-width: 800px) 100vw, 60vw"
+                                     width="1280" height="747" loading="lazy" decoding="async"
+                                     alt="Architecture diagram of the RAG pipeline over CV documents: PyMuPDF extraction, semantic chunking, FAISS vector index, Jina reranking, then Gemini or Groq generation">
+                            </picture>
+                        </div>
+                        <div class="entry__info">
+                            <h4 class="entry__title">RAG over CV Documents</h4>
+                            <div class="entry__cat">RAG Pipeline · Live Demo</div>
+                        </div>
+                    </a>
+
+                    <div class="entry__body">
+                        <h3 class="entry__headline">RAG over CV Documents</h3>
+                        <div class="entry__meta">End to end RAG pipeline with swappable providers</div>
+                        <div class="glightbox-desc entry__desc-07 entry__desc">
+                            <p>
+                            This project answers questions about CV PDFs and shows the exact passages behind every answer. Text is extracted with PyMuPDF, split into semantic chunks rather than fixed character windows, and indexed in a FAISS vector store. At query time the top matches are reranked with Jina before the LLM sees them, so the answer is built from the two or three passages that actually matter instead of the whole document.
+                            Every provider is swappable through environment variables. Gemini or Groq for generation, Jina or a local MiniLM model for embeddings, reranking on or off. The committed index uses 768 dimensional Jina embeddings, which keeps torch out of the deployment and fits inside Streamlit Community Cloud's build and memory limits. Built with Python, LangChain, FAISS and Streamlit.
+                            <a href="https://cv-based-rag-system-from-hassaan.streamlit.app/" target="_blank" rel="noopener noreferrer">Live Demo</a>.
+                            </p>
+                        </div>
+                    </div>
                 </div> </div>             <div class="row section-extracurriculars">
                 <div class="column xl-12">
 
@@ -612,7 +641,9 @@
                                 <div class="linkedin-logo">
                                     <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
                                         <rect width="24" height="24" rx="4" fill="#000000"/>
-                                        <path d="M8.339 18.337H5.667V9.332h2.672v9.005zM7.003 8.005c-.995 0-1.801-.806-1.801-1.801 0-.995.806-1.801 1.801-1.801.995 0 1.801.806 1.801 1.801 0 .995-.806 1.801-1.801 1.801zM18.339 18.337h-2.669V14.16c0-.996-.018-2.277-1.387-2.277-1.389 0-1.601 1.086-1.601 2.206v4.248h-2.667V9.332h2.56v1.178h.037c.358-.679 1.229-1.387 2.52-1.387 2.699 0 3.197 1.776 3.197 4.092v4.248z" fill="white"/>
+                                        <g transform="translate(0.23 0.63)">
+                                            <path d="M8.339 18.337H5.667V9.332h2.672v9.005zM7.003 8.005c-.995 0-1.801-.806-1.801-1.801 0-.995.806-1.801 1.801-1.801.995 0 1.801.806 1.801 1.801 0 .995-.806 1.801-1.801 1.801zM18.339 18.337h-2.669V14.16c0-.996-.018-2.277-1.387-2.277-1.389 0-1.601 1.086-1.601 2.206v4.248h-2.667V9.332h2.56v1.178h.037c.358-.679 1.229-1.387 2.52-1.387 2.699 0 3.197 1.776 3.197 4.092v4.248z" fill="white"/>
+                                        </g>
                                     </svg>
                                 </div>
                                 <h3>Follow me on LinkedIn</h3>
@@ -653,6 +684,8 @@
                                 <li><a href="https://x.com/urboioi" target="_blank" rel="noopener noreferrer">Twitter</a></li>
                                 <li><a href="https://www.instagram.com/hassaan.hmk/?next=%2F" target="_blank" rel="noopener noreferrer">Instagram</a></li>
                                 <li><a href="https://scholar.google.com/citations?user=aWM8CKsAAAAJ&amp;hl=en" target="_blank" rel="noopener noreferrer">Google Scholar</a></li>
+                                <li><a href="https://www.fiverr.com/hassaanmkhan?public_mode=true" target="_blank" rel="noopener noreferrer">Fiverr</a></li>
+                                <li><a href="https://www.upwork.com/freelancers/~01db34d76a8cc018f5?mp_source=share" target="_blank" rel="noopener noreferrer">Upwork</a></li>
                             </ul>
                         </div>
                         <div class="column xl-6 md-6 tab-12">
@@ -671,6 +704,14 @@
 
                 <div class="column xl-6 tab-12">
                     <a href="Hassaan_Resume_August_2026.pdf" download="Hassaan-Muhammad-Khan-CV.pdf" class="btn btn--stroke btn--large u-fullwidth">Get My CV</a>
+                </div>
+
+                <div class="column xl-6 tab-12">
+                    <a href="https://www.fiverr.com/hassaanmkhan?public_mode=true" target="_blank" rel="noopener noreferrer" class="btn btn--stroke btn--large u-fullwidth">Hire Me on Fiverr</a>
+                </div>
+
+                <div class="column xl-6 tab-12">
+                    <a href="https://www.upwork.com/freelancers/~01db34d76a8cc018f5?mp_source=share" target="_blank" rel="noopener noreferrer" class="btn btn--stroke btn--large u-fullwidth">Hire Me on Upwork</a>
                 </div>
 
             </div> <div class="row s-footer__bottom">
